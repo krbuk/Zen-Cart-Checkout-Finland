@@ -12,21 +12,15 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: Nida Verkkopalvelu / Krbuk 2020 Jan 9 Modified in v1.5.6c $
  */
-// required to prevent PHP 5.3 from throwing errors:
-//if (!defined('JSON_UNESCAPED_SLASHES')) define('JSON_UNESCAPED_SLASHES', 64);
-//if (!defined('JSON_UNESCAPED_UNICODE')) define('JSON_UNESCAPED_UNICODE', 256);
 
-// Use Guzzle HTTP client v6 installed with Composer https://github.com/guzzle/guzzle/
-// We recommend using Guzzle HTTP client through composer as default HTTP client for PHP because it has
-// well documented and nice api. You can use any HTTP library to connect into Checkout API.
-// Alternatively, if you can't install composer packages you can use http://php.net/manual/en/book.curl.php		
 require DIR_FS_CATALOG . DIR_WS_CLASSES . 'vendors/checkoutfinland/autoload.php';
 
-class checkoutfinland
+class checkoutfinland extends base
 {
 	var $code, $title, $description, $enabled, $sort_order;
-	public $moduleVersion = '2.00';
-    protected $OpCheckoutApiVersion = '1.56c';
+	public $moduleVersion = '1.5.6';
+    protected $OpCheckoutApiVersion = '2.00'; 
+	
     function __construct()
     {
         global $order;	
@@ -45,11 +39,15 @@ class checkoutfinland
 		$this->form_action_url  = "https://api.checkout.fi/payments";
 		$this->merchant_id = MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS;		
 		$this->private_key = MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN;
-        $this->aggregate_merchant_id = MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA;
+		$this->aggregate_merchant_id = MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA;
 		$this->aggregate_secret_key   = MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN;
 		$this->shop_in_Shop_merchant_id = MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA;	
 		
-		$this->amount = $order->info['total'];
+		$this->order_reference = time().rand(0,9999);
+		$this->order_reference = str_pad($this->order_reference, 9, "1", STR_PAD_RIGHT);		
+		
+		//$payment_amount =round($order->info['total'], 2); // 26.50
+		$this->payment_amount = round($order->info['total'], 2); // 26.50
 		$this->currency = $order->info['currency'];
 		$this->languages = ($_SESSION['languages_code']== 'fi') ? 'FI' : 'EN';
 		
@@ -155,36 +153,12 @@ class checkoutfinland
 	}
 	
 	function process_button()
-	{
+	{	
 		global $order, $currencies, $db, $order_totals;
 		
-		$merchant_id = $this->merchant_id;		
-		$private_key = $this->private_key;
-        $aggregate_merchant_id = $this->aggregate_merchant_id;
-		$aggregate_secret_key   = $this->aggregate_secret_key;
-		$shop_in_Shop_merchant_id = $this->shop_in_Shop_merchant_id;
-		
-		
-		// Generate a random integer Min - Max 
-		$unitPrice = rand(0,99999999);
-		$vatPercentage = rand(0,100);
-
-		//$t = explode(" ",microtime());
-		//$checkout_timestamp = date("Y-m-d\TH:i:s",$t[1]).substr((string)$t[0],1,4) .'Z';
-		// $checkout_timestamp = date("Y-m-d\TH:i:s.u\Z");
         $delivery_date = date("Y-m-d");		
-		$currency = 'EUR';
 		$method = 'POST';
 
-		$order_number = time().rand(0,9999);
-		$order_number = str_pad($order_number, 9, "1", STR_PAD_RIGHT);	
-		
-		// Order amount
-		$amount = rand(0,99999999);
-		$amount = number_format(($order->info['total']) * $currencies->get_value($currency), $currencies->get_decimal_places($currency), '.', '');
-		$amount = round($amount * 100 ); 	
-		
-		
 		//Variable to compare product calculation to total amount of the order
 		$total_check = 0;
 
@@ -289,8 +263,8 @@ class checkoutfinland
 			array_push($products, $shipping);
 		}
 
-		//Add discount coupon to product breakdown (if exists)
-		if(isset($_SESSION['cc_id'])){
+		//Add discount and  coupon to product breakdown (if exists)
+/*		if(isset($_SESSION['cc_id'])){
 			$sql = "select * from " . TABLE_COUPONS . " where coupon_id=:couponID: and coupon_active='Y' ";
 			$sql = $db->bindVars($sql, ':couponID:', $_SESSION['cc_id'], 'integer');
 			$coupon = $db->Execute($sql);
@@ -317,10 +291,10 @@ class checkoutfinland
 					'deliveryDate' => $delivery_date					
 				);
 				array_push($products, $product);
-			}
+			}*/
 
 			//Depending on zencart payment_total sort-order coupons might be calculated in a way that the couponresult wont match the actual discount
-			if ($coupon_result > 0  && ($total_check > $amount+10 || $total_check < $amount-10)){
+/*			if ($coupon_result > 0  && ($total_check > $amount+10 || $total_check < $amount-10)){
 				$discounts = $amount - $total_check - number_format(($currencies->get_value($order->info['currency']) * ($coupon_result))*100, 0, '.', '');
 				$product = array(
 					'productCode' => MODULE_PAYMENT_CHECKOUTFINLAND_DISCOUNT_TEXT,
@@ -331,20 +305,18 @@ class checkoutfinland
 				);
 				array_push($products, $product);
 			}
-		}			
-		
+		}		
+	*/	
 	/////////////////////////////////////////////////////////////	
 		
 		$headers = $this->getResponseHeaders($method);
-		// $body = '' for GET requests 
-		//$body = $this->getResponseBody($order, $currencies, $db, $order_totals);
-		// $body = '' for GET requests 
+		//$body = $this->getResponseBody($order);
         $body = json_encode(
             [
                 'stamp' => hash('sha256', time() . $this->merchant_id),
-                'reference' => $order_number,
+                'reference' => $this->order_reference,
             //    'amount' => round($order->info['total'] * 100 ),
-				'amount' => $amount,
+				'amount' => $this->payment_amount * 100,
                 'currency' => $this->currency,
                 'language' => $this->languages,
 				'items' => $products,
@@ -380,9 +352,7 @@ class checkoutfinland
             ],
             JSON_UNESCAPED_SLASHES
         );
-				
-		
-		//$headers['signature'] = $this->calculateHmac($private_key, $headers, $body);
+			
         $headers['signature'] = $this->calculateHmac($headers, $body, $this->private_key);		
         $client = new \GuzzleHttp\Client(['headers' => $headers]);		
 		$response = null;
@@ -413,187 +383,58 @@ class checkoutfinland
 			echo '<div style="color:red">'. MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_API_ERROR .'</div>';
 		} 
 		else {
-		// Writing checkoutpayform_session
-		$sql = ( "insert into checkoutpayform_session (cpf_order_number, cpf_cart, sendto, billto, customer_id, shipping_details, coupon) values (:ordernumber:, :sessioncart:, :sessionsendto:, :sessionbillto:, :sessioncustomerid:, :sessionshipping:, :sessioncoupon:)");
-		$sql = $db->bindVars($sql, ':ordernumber:', $order_number, 'string');
-		$sql = $db->bindVars($sql, ':sessioncart:', json_encode($_SESSION['cart']), 'string');
-		$sql = $db->bindVars($sql, ':sessionsendto:', $_SESSION['sendto'], 'integer');
-		$sql = $db->bindVars($sql, ':sessionbillto:', $_SESSION['billto'], 'integer');
-		$sql = $db->bindVars($sql, ':sessioncustomerid:', $_SESSION['customer_id'], 'integer');
-		$sql = $db->bindVars($sql, ':sessionshipping:', json_encode($_SESSION["shipping"]), 'string');
-		$sql = $db->bindVars($sql, ':sessioncoupon:', $_SESSION['cc_id'], 'integer');
-		$db->Execute($sql);
+
 		}
 		
-/*		// NIDA
-		// näyttä lähetys tiedot
-		echo "<br><br> \n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n";		
-		echo '<br><br> Summa : ' .$amount;
-		echo '<br><br> ALV : ' .$item_vatPercentage;
-		echo '<br><br> units price : ' .$items_unitPrice;
-		echo '<br><br> item units : ' .$items_units;
+		// NIDA
+		// tarkastus tiedot
+/*		echo '<br><br> Request ID		: '	.$response->getHeader('cof-request-id')[0];	
+		echo '<br><br> Tarkastus:<br> 	  ' .json_encode ($body);			
+		echo '<br><br> reference		: '	.$this->order_reference;		
+		echo '<br><br> Summa			: ' .$this->payment_amount .'&nbsp; / &nbsp;' .$this->payment_amount * 100;
+		echo '<br><br> units price		: ' .$product['unitPrice'];		
+		echo '<br><br> units		    : ' .$product['units'];	
+		echo '<br><br> vatPercentage    : ' .(int)(round($item['tax'], 0));
+		echo '<br><br> shipping_cost	: '  .$order->info['shipping_cost'] .'&nbsp; / &nbsp;' .$order->info['shipping_cost']* 100;	
 		
-		echo '<br><br> deliveri address : ' .$contact_addr_street;
+		echo '<br><br> deliveri address	: ' .$contact_addr_street;
+		echo '<br><br> urun bilgileri	: '  .$product['unitPrice'];
+		echo '<br><br> urun bilgileri	: '  .$product;	
+		echo '<br><br> urun bilgileri	: '  .$shipping_price;	
+		echo '<br><br> indirim % 		: '  .$discounts;
+		echo '<br><br> indirim kupon	: '  .$coupon_result;		
+
+	   echo '<br><br> indirim kupon degeri : '  .$coupon->fields['coupon_amount'] .'&nbsp;/&nbsp;' .$coupon_amount_formatted;	*/	
 		
-		echo '<br><br> shipping_cost : '  .$order->info['shipping_cost'] .'&nbsp; / &nbsp;' .$shipping['unitPrice'];	
-		
-		echo '<br><br> urun bilgileri : '  .$products;	
-		echo '<br><br> urun bilgileri : '  .$product;	
-		echo '<br><br> urun bilgileri : '  .$shipping_price;	
-		echo '<br><br> indirim % : '  .$discounts;
-		echo '<br><br> indirim kupon : '  .$coupon_result;		
-		echo '<br><br> order_number : '  .$order_number;
-		
-		echo '<br><br> $total_check : '  .$total_check;			
-		
-	   echo '<br><br> indirim kupon degeri : '  .$coupon->fields['coupon_amount'] .'&nbsp;/&nbsp;' .$coupon_amount_formatted;		
-		
-		echo '<br><br>' .$body .'<br><br>/////';	
-		*/
+	//	echo '<br><br>' .$body .'<br><br>';	
+	//	echo '<br><br> Tarkastus	:<br>' .$responseBody;
 		
 		// checkout finland responseBody
 		//return $responseBody;		
 		//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 		//return $this->getResponse;
 		
-		//return $this->getAllPaymentMethods();  // 404 Not Found The requested resource doesn't exist.
 
 
-		return $this->getEnabledPaymentMethodGroups();  // error array
+
+		//return $this->getEnabledPaymentMethodGroups();  // error array
 		
 		//return $this->getEnabledPaymentMethodsByGroup();	
-
+		
+	    //return $this->getAllPaymentMethods();  // 404 Not Found The requested resource doesn't exist.	
+		
+		return $this->getEnabledPaymentMethodGroups();
 
 	}
-	
-	
-////////////////////////////////////////////////////////////////	
 
-	
-	
-	
-	
-////////////////////////////////////////////////////////////////		
 	function before_process()
 	{
-		global $messageStack, $db;
-		//if this is a notify checkout process, stop here
-		if (isset($_SESSION['notify_process']) && $_SESSION['notify_process']) return;
-
-		$return_code = isset($_POST['RETURN_CODE']) ? $_POST['RETURN_CODE'] : -999;
-		$incident_id = isset($_POST['INCIDENT_ID']) ? $_POST['INCIDENT_ID'] : null;
-		$settled = isset($_POST['SETTLED']) ? $_POST['SETTLED'] : null;
-		$authcode = isset($_POST['AUTHCODE']) ? $_POST['AUTHCODE'] : null;
-		$order_number = isset($_POST['ORDER_NUMBER']) ? $_POST['ORDER_NUMBER'] : null;
-		$contact_id = isset($_POST['CONTACT_ID']) ? $_POST['CONTACT_ID'] : null;
-
-		$authcode_confirm = $return_code .'|'. $order_number;
-
-		if(isset($return_code) && $return_code == 0){
-			$authcode_confirm .= '|' . $settled;
-			if(isset($contact_id) && !empty($contact_id)){
-				$authcode_confirm .= '|' . $contact_id;
-			}
-		}
-		else if(isset($incident_id) && !empty($incident_id)){
-			$authcode_confirm .= '|' . $incident_id;
-		}
-		$success = false;
-		$error_message = null;
-
-		//Retrieve saved cart from checkoutpayform_session table
-		$sql = "select * from checkoutpayform_session where cpf_order_number='$order_number'";
-		$row = $db->Execute($sql);
-
-		//If order already been created, exit
-		if($row->RecordCount() > 0){
-			if($row->fields['status'] != 0)
-				zen_redirect(zen_href_link(FILENAME_CHECKOUT_SUCCESS, '', 'SSL'));
-		}
-
-		$authcode_confirm = strtoupper(hash_hmac('sha256', $authcode_confirm, MODULE_PAYMENT_CHECKOUTFINLAND_PRIVATE_KEY));
-
-		if($authcode_confirm == $authcode)
-		{
-			switch ($return_code)
-			{
-				case 0:
-					$success = true;
-					if($settled == 0)
-					{
-						$comment = MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_AUTHRORIZED;
-						$status_id = MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_AUTHORIZED;
-						$is_settled = false;
-						$db->Execute("UPDATE checkoutpayform_session SET status='$status_id' where cpf_order_number='$order_number'");
-					}
-					else
-					{
-						$comment = MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_SETTLED;
-						$status_id = MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED;
-						$is_settled = true;
-						$db->Execute("UPDATE checkoutpayform_session SET status='$status_id' where cpf_order_number='$order_number'");
-					}
-
-					$comment .= " " . MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_NUMBER . ": " . $order_number . ".";
-					$_SESSION['checkoutpayform_order_comment'] = $comment;
-					$_SESSION['checkoutpayform_order_status_id'] = $status_id;
-					$_SESSION['checkoutpayform_order_number'] = $order_number;
-					$_SESSION['checkoutpayform_is_settled'] = $is_settled;
-					break;
-				default:
-					$error_message = MODULE_PAYMENT_CHECKOUTFINLAND_ERROR;
-					break;
-			}
-		}
-		else
-		{
-			$error_message = MODULE_PAYMENT_CHECKOUTFINLAND_MAC_ERROR;
-		}
-
-		if(!$success)
-		{
-			$messageStack->add_session('checkout_payment', $error_message, 'error');
-			zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true, false));
-		}
+		return false;
 	}
 	
 	function after_process()
 	{
-		global $insert_id, $db;
-
-		if(isset($_SESSION['checkoutpayform_order_comment']))
-		{
-			$comment = $_SESSION['checkoutpayform_order_comment'];
-			$comments = zen_db_prepare_input($comment);
-			$db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = CONCAT(comments, '" . zen_db_input($comments) . "')  where orders_id = '" . $insert_id . "'");
-			unset($_SESSION['checkoutpayform_order_comment']);
-		}
-
-		if(isset($_SESSION['checkoutpayform_order_status_id']))
-		{
-			if($_SESSION['checkoutpayform_order_status_id'] > 0)
-			{
-				$order_status_id = zen_db_input($_SESSION['checkoutpayform_order_status_id']);
-
-				$db->Execute("update " . TABLE_ORDERS . " set orders_status = '" . $order_status_id . "' where orders_id = '" . $insert_id . "'");
-				$db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set orders_status_id=$order_status_id  where orders_id = '" . $insert_id . "'");
-			}
-
-			unset($_SESSION['checkoutpayform_order_status_id']);
-		}
-
-		if(isset($_SESSION['checkoutpayform_order_number']))
-		{
-			$db->Execute("update " . TABLE_ORDERS . " set cpf_order_number = '" . zen_db_input($_SESSION['checkoutpayform_order_number']) . "' where orders_id = '" . $insert_id . "'");
-			unset($_SESSION['checkoutpayform_order_number']);
-		}
-
-		if(isset($_SESSION['checkoutpayform_is_settled']) && $_SESSION['checkoutpayform_is_settled'])
-		{
-			$db->Execute("update " . TABLE_ORDERS . " set cpf_settled = '1' where orders_id = '" . $insert_id . "'");
-			unset($_SESSION['checkoutpayform_is_settled']);
-		}
-		return true;
+		return false;
 	}
 
 
@@ -611,24 +452,12 @@ class checkoutfinland
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) values ('Maksumoduulin voimassaoloalue', 'MODULE_PAYMENT_CHECKOUTFINLAND_ZONE', '0', 'Jos alue on valittu, käytä tätä maksutapaa vain valitun alueen ostotapahtumille..', '6', '8', 'zen_get_zone_class_title', 'zen_cfg_pull_down_zone_classes(', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Tilauksen tila', 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID', '0', 'Määritä tilauksen tila maksutapahtuman suorituksen jälkeen:', '6', '9', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Log Mode', 'MODULE_PAYMENT_CHECKOUTFINLAND_LOGGING', 'Kirjaudu sisään virheitä ja lähetä sähköpostiviesti virheistä', 'Haluatko ottaa virheenkorjaustilan käyttöön? Täydellinen yksityiskohtainen loki epäonnistuneista tapahtumista voidaan lähettää sähköpostitse myymälän omistajalle.', '6', '10', 'zen_cfg_select_option(array(\'Off\', \'Log Always\', \'Log on Failures\', \'Log Always and Email on Failures\', \'Log on Failures and Email on Failures\', \'Email Always\', \'Email on Failures\'), ', now())");
-		
-		// Add Order table more table
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " ADD cpf_order_number varchar(255)");
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " ADD cpf_settled int(1) DEFAULT 0");
-		
-		// Greate Checkout Payform Session databasetable
-		$db->Execute( "CREATE TABLE IF NOT EXISTS checkoutpayform_session (`cpf_id` INT(11) NOT NULL AUTO_INCREMENT, `cpf_order_number` VARCHAR(50) NOT NULL, `cpf_cart` TEXT NOT NULL, `sendto` INT(11) NOT NULL DEFAULT '0', `billto` INT(11) NOT NULL DEFAULT '0', `customer_id` INT(11) NOT NULL DEFAULT '0',`shipping_details` VARCHAR(500) NOT NULL, `status` INT(5) NOT NULL DEFAULT '0', `coupon` INT(3) DEFAULT '0', PRIMARY KEY (`cpf_id`))");		
 	}
 
 	function remove()
 	{
 		global $db;
 		$db->Execute("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
-		
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " DROP COLUMN cpf_order_number");
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " DROP COLUMN cpf_settled");
-
-		$db->Execute("DROP TABLE IF EXISTS checkoutpayform_session");		
 	}
 
 	function keys()
@@ -699,15 +528,11 @@ class checkoutfinland
 
         $responseBody = $response->getBody()->getContents();
 
-        $responseHeaders = array_column(
-            array_map(function ($key, $value) {
-                return [$key, $value[0]];
-            },
-            array_keys($response->getHeaders()),
-            array_values($response->getHeaders())),
-            1,
-            0
-        );
+		$responseHeaders = array_column(array_map(function ($key, $value) {
+			return [ $key, $value[0] ];
+		}, 
+		array_keys($response->getHeaders()), 
+		array_values($response->getHeaders())), 1, 0);
 
         $responseHmac = $this->calculateHmac($responseHeaders, $responseBody, $this->private_key);
         $responseSignature = $response->getHeader('signature')[0];
@@ -731,7 +556,7 @@ class checkoutfinland
         foreach ($groupData as $group) {
             $groups[] = [
                 'id' => $group,
-                'title' => Mage::helper('opcheckout')->__($group)
+                'title' => $group,
             ];
         }
 
@@ -752,11 +577,9 @@ class checkoutfinland
     {
 		global $order, $currencies, $db, $order_totals;		
 		$grandTotal = round($order->info['total'], 2);
-	
         $uri = '/merchants/payment-providers?amount=' . $grandTotal * 100;
         $method = 'get';
         $response = $this->getResponse($uri, '', $method);
-		
         return $response['data'];
     }
 
@@ -816,6 +639,7 @@ class checkoutfinland
 			'content-type' => 'application/json; charset=utf-8',
 		];
     }
+	
     public function calculateHmac(array $params = [], $body = null, $secretKey = null)
     {
         // Keep only checkout- params, more relevant for response validation.
@@ -848,67 +672,73 @@ class checkoutfinland
         }
     }	
 	
-
-/*    public function getResponseBody($order, $currencies, $db, $order_totals)
+/*
+   public function getResponseBody($order)
     {
-        //$billingAddress = $order->getBillingAddress();
-        //$shippingAddress = $order->getShippingAddress();
-		//Create a randomized order-number
-		$order_number = time().rand(0,9999);
-		$order_number = str_pad($order_number, 9, "1", STR_PAD_RIGHT);	
-		
-		// Order amount
-		$$amount = rand(0,99999999);
-		$amount = number_format(($order->info['total']) * $currencies->get_value($currency), $currencies->get_decimal_places($currency), '.', '');
-		$amount = round($amount * 100 ); 
-		
-        // using json_encode for option.
         $body = json_encode(
             [
                 'stamp' => hash('sha256', time() . $this->merchant_id),
-                'reference' => $order_number,
-		  //    'amount' => round($order->info['total'] * 100 ),				
-                'amount' => $amount,
+                'reference' => $this->order_reference,
+				'amount' => $this->payment_amount * 100,
                 'currency' => $this->currency,
                 'language' => $this->languages,
-         //     'items' => $this->getOrderItems($order),
-				'items' => $products,
+				'items' => $this->getOrderItems($order),
                 'customer' => [
                     'firstName' => $this->contact_firstname,
                     'lastName' => $this->contact_lastname,
                     'phone' => $this->contact_phone,
                     'email' => $this->contact_email,
                 ],
-				'invoicingAddress' =>  [
-					'streetAddress' => trim(substr($order->billing['street_address'],0,50)),
-					'postalCode' => trim(substr($order->billing['city'],0,5)),
-					'city' => trim(substr($order->billing['postcode'],0,18)),
-					'county' => trim(substr($order->billing['state'],0,10)),
-					'country' => $order->billing['country']['iso_code_2'],					
-				],
 				'deliveryAddress' =>  [
-					'streetAddress' => trim(substr($order->delivery['street_address'],0,50)),
-					'postalCode' => trim(substr($order->delivery['city'],0,5)),
-					'city' => trim(substr($order->delivery['postcode'],0,18)),
-					'county' => trim(substr($order->delivery['state'],0,10)),
-					'country' => $order->delivery['country']['iso_code_2'],					
+					'streetAddress' => $this->contact_invoicing_addr_street,
+					'postalCode' => $this->contact_invoicing_addr_postalCode,
+					'city' => $this->contact_invoicing_addr_city,
+					'county' => $this->contact_invoicing_addr_county,
+					'country' => $this->contact_invoicing_addr_country,					
 				],
+				'invoicingAddress' =>  [
+					'streetAddress' => $this->contact_delivery_addr_street,
+					'postalCode' => $this->contact_delivery_addr_postalCode,
+					'city' => $this->contact_delivery_addr_city,
+					'county' => $this->contact_delivery_addr_county,
+					'country' => $this->contact_delivery_addr_country,					
+				],				
+				
                 'redirectUrls' => [
                     'success' => $this->return_address,
-                    'cancel' => $this->cancel_address,
+                    'cancel' =>  $this->cancel_address,
                 ],
                 'callbackUrls' => [
                     'success' => $this->return_address,
-                    'cancel' => $this->cancel_address,
+                    'cancel' =>  $this->cancel_address,
                 ],
             ],
             JSON_UNESCAPED_SLASHES
         );
 
         return $body;
+		
     }
-*/
+*/	
+    public function getOrderItems($order)
+    {
+		global $order, $currencies, $db;
+		foreach($order_items as $item) {
+			$product_price = $item['final_price'];
+			$product = array(
+				'productCode' => $item['name'],
+				'description' => $item['model'],
+				'units' => $item['qty'],
+				'unitPrice' => ($item['total'] * 100 ),
+				'vatPercentage' => (int)(round($item['tax'], 0)),
+				'deliveryDate' => $delivery_date
+			);
+			$total_check += $product['unitPrice']*$product['units'];			
+			array_push($products, $product);
+	 	}
 
-/////////////////////////////////	
+    }
+
+
 }
 ?>

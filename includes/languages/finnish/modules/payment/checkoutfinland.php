@@ -1,6 +1,6 @@
 <?php
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_TITLE', 'Verkkomaksu');
-define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION', 'Checkout - ASETUKSET <br>Tilaa Checkout oheisella lomakkeella. Käsittelemme tilaukset yhden arkipäivän kuluessa. Luottokorttimaksujen aktivoiminen edellyttää yrityksen tietoja sekä sitä, että verkkokaupan toimitus-, palautus- ja maksuehdot ovat kunnossa
+define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION', 'Checkout - ASETUKSET <br> Tilaa Checkout oheisella lomakkeella. Käsittelemme tilaukset yhden arkipäivän kuluessa. Luottokorttimaksujen aktivoiminen edellyttää yrityksen tietoja sekä sitä, että verkkokaupan toimitus-, palautus- ja maksuehdot ovat kunnossa<br><br>
        <a href="https://www.checkout.fi/" target="_blank">Hanki lisätietoja</a><br><br>
        <a href="https://extranet.checkout.fi/" target="_blank">Kirjaudu Checkout-tiliisi</a>');
 
@@ -10,6 +10,8 @@ define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_PAY_BUTTON', 'Siirry maksamaan');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST', 'Huomio: Test');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_ERROR', 'Maksu epäonnistui.');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_API_ERROR', '<b>VIRHE</b> Checkout verkkomaksu -HMAC-allekirjoituksiin väärin!');
+define('MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_BODY_JSON_FAILED', '<b>VIRHE</b> Tarkista, <strong>BODY_JSON</strong> väärin!');
+
 
 define('MODULE_PAYMENT_CHECKOUTFINLAND_SETTLE_TEXT', 'Veloita maksu');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_COUPON_TEXT', 'Kuponki');
@@ -18,8 +20,6 @@ define('MODULE_PAYMENT_CHECKOUTFINLAND_DISCOUNT_TEXT', 'Alennukset');
 
 
 ///
-
-define('MODULE_PAYMENT_CHECKOUTFINLAND_MAC_ERROR', 'Virhe MAC-laskennassa.');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ACCEPTED', 'Maksu hyväksytty');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_NUMBER', 'Tilausnumero');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_AUTHRORIZED', 'Maksu varmennettu.');
