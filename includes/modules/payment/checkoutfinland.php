@@ -309,17 +309,17 @@ class checkoutfinland extends base
 	*/	
 	/////////////////////////////////////////////////////////////	
 		
-		$headers = $this->getResponseHeaders($method);
-		//$body = $this->getResponseBody($order);
+        $headers = $this->getResponseHeaders($method);
+        //$body = $this->getResponseBody($order);
         $body = json_encode(
             [
                 'stamp' => hash('sha256', time() . $this->merchant_id),
                 'reference' => $this->order_reference,
             //    'amount' => round($order->info['total'] * 100 ),
-				'amount' => $this->payment_amount * 100,
+                'amount' => $this->payment_amount * 100,
                 'currency' => $this->currency,
                 'language' => $this->languages,
-				'items' => $products,
+                'items' => $products,
                 'customer' => [
                     'firstName' => $this->contact_firstname,
                     'lastName' => $this->contact_lastname,
@@ -440,7 +440,6 @@ class checkoutfinland extends base
 
 	function install()
 	{
-		/* Testitunnukset  */
 		global $db;
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Lajittelujärjestys', 'MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER', '0', 'Maksutavan lajittelujärjestys. Pienimmän luvun omaava on ylimpänä.', '6', '1', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Ota käyttöön Checkout', 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS', 'Kylla', 'Otetaanko maksumoduuli käyttöön?', '6', '2', 'zen_cfg_select_option(array(\'Kylla\', \'Ei\'), ', now())");
@@ -462,7 +461,7 @@ class checkoutfinland extends base
 
 	function keys()
 	{
-		return array('MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER', 
+		return array('MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER',
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS', 
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS', 
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN', 
@@ -720,7 +719,7 @@ class checkoutfinland extends base
 		
     }
 */	
-    public function getOrderItems($order)
+/*    public function getOrderItems($order)
     {
 		global $order, $currencies, $db;
 		foreach($order_items as $item) {
@@ -737,7 +736,7 @@ class checkoutfinland extends base
 			array_push($products, $product);
 	 	}
 
-    }
+    }*/
 
 
 }
