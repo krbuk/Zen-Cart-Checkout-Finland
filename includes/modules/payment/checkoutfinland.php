@@ -34,7 +34,6 @@ class checkoutfinland
 	public $moduleVersion = '2.00';
 	protected $OpCheckoutApiVersion = '1.56c';	
 	
-	//function checkoutfinland()
 	function __construct()	
 	{
         global $order;	
@@ -79,8 +78,6 @@ class checkoutfinland
 		{
 			$this->order_status = MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED;
 		}
-		
-        //$this->_logDir = DIR_FS_LOGS;
 
         // check for zone compliance and any other conditionals
 		if(is_object($order)) $this->update_status();
@@ -139,8 +136,9 @@ class checkoutfinland
 		
 		// Order amount
 		$decimals = $currencies->get_decimal_places($_SESSION['currency']);
-		$amount = zen_round($order->info['total'], $decimals);
-		$this->amount = $amount * 100;
+		//$amount = zen_round($order->info['total'], $decimals);
+		$amount = number_format($order->info['total'], 2, '.', '')*100;
+		$this->amount = $amount;
 		// ********************************
 		// Op Bank Payment Checkout Finland
 		// ********************************		
@@ -176,9 +174,9 @@ class checkoutfinland
 			$decodedresponsebody = json_decode($responseBody);
 			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
 			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-		    //echo '<pre>'; print_r(json_decode($body,true)); exit;			
+		    //echo '<pre>'; print_r(json_decode($body,true)); exit;	
+			
 		}
-
 		// Starting active payment icon
 		$html  = "</form>\n";
 		$html .='<style>		
@@ -192,10 +190,11 @@ class checkoutfinland
     		margin-bottom: 8px;
 			}
 		#btn_submit, .buttonRow  { display: none; } /*Submit button hidden */
-		
+		.btn-success { display: none; } /*Submit button hidden */
 		</style>	
 		';
 		
+
 		// Provider payment group title	
 		$group_titles = [
 			'mobile'     => 'Mobile payment methods',
@@ -274,16 +273,6 @@ class checkoutfinland
 		';
 		$html .= '<div style="clear: both"></div>';
 
-		// Writing checkoutfinland_session
-		$sql = ( "insert into checkoutfinland_session (cpf_order_number, cpf_cart, sendto, billto, customer_id, shipping_details, coupon) values (:ordernumber:, :sessioncart:, :sessionsendto:, :sessionbillto:, :sessioncustomerid:, :sessionshipping:, :sessioncoupon:)");
-		$sql = $db->bindVars($sql, ':ordernumber:', $order_number, 'string');
-		$sql = $db->bindVars($sql, ':sessioncart:', json_encode($_SESSION['cart']), 'string');
-		$sql = $db->bindVars($sql, ':sessionsendto:', $_SESSION['sendto'], 'integer');
-		$sql = $db->bindVars($sql, ':sessionbillto:', $_SESSION['billto'], 'integer');
-		$sql = $db->bindVars($sql, ':sessioncustomerid:', $_SESSION['customer_id'], 'integer');
-		$sql = $db->bindVars($sql, ':sessionshipping:', json_encode($_SESSION["shipping"]), 'string');
-		$sql = $db->bindVars($sql, ':sessioncoupon:', $_SESSION['cc_id'], 'integer');
-		$db->Execute($sql);
 		return $html;			
 }// end function process_button
 
@@ -335,31 +324,18 @@ class checkoutfinland
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Ota käyttöön Checkout', 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS', 'Kyllä', 'Otetaanko maksumoduuli käyttöön?', '6', '2', 'zen_cfg_select_option(array(\'Kyllä\', \'Ei\'), ', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS', '375917', 'TEST kauppiastunnus: 375917', '6', '3', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Turva-avain', 'MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN', 'SAIPPUAKAUPPIAS', 'Test turva-avain: SAIPPUAKAUPPIAS', '6', '4', now())");
-		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Yhdistelmä kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA', '695861', 'TEST yhdistelmä kauppiatunnus: 695861', '6', '5', now())");	
-		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Yhdistelmä turva-avain', 'MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN', 'MONISAIPPUAKAUPPIAS', 'Test yhdistelmä turva-avain: MONISAIPPUAKAUPPIAS', '6', '6', now())");	
-		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Myyjältä Myyjä kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA', '695874', 'Test myyjältä myyjä kauppiastunnus: 695874', '6', '7', now())");
+		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Yhdistelmä kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA', '', 'TEST yhdistelmä kauppiatunnus: 695861', '6', '5', now())");	
+		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Yhdistelmä turva-avain', 'MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN', '', 'Test yhdistelmä turva-avain: MONISAIPPUAKAUPPIAS', '6', '6', now())");	
+		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Myyjältä Myyjä kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA', '', 'Test myyjältä myyjä kauppiastunnus: 695874', '6', '7', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) values ('Maksumoduulin voimassaoloalue', 'MODULE_PAYMENT_CHECKOUTFINLAND_ZONE', '0', 'Jos alue on valittu, käytä tätä maksutapaa vain valitun alueen ostotapahtumille..', '6', '8', 'zen_get_zone_class_title', 'zen_cfg_pull_down_zone_classes(', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Tilauksen tila suoritetun maksun jälkeen', 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED', '2', 'Tilauksen tila maksun suorittamisen jälkeen:', '6', '10', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Tilauksen tila valtuutetun maksun jälkeen', 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_AUTHORIZED', '1', 'Tilauksen tila sen jälkeen kun maksu on valtuutettu:', '6', '11', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
-		
-		
-//		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Log Mode', 'MODULE_PAYMENT_CHECKOUTFINLAND_LOGGING', 'Kirjaudu sisään virheitä ja lähetä sähköpostiviesti virheistä', 'Haluatko ottaa virheenkorjaustilan käyttöön? Täydellinen yksityiskohtainen loki epäonnistuneista tapahtumista voidaan lähettää sähköpostitse myymälän omistajalle.', '6', '13', 'zen_cfg_select_option(array(\'Off\', \'Log Always\', \'Log on Failures\', \'Log Always and Email on Failures\', \'Log on Failures and Email on Failures\', \'Email Always\', \'Email on Failures\'), ', now())");
-		
-		// Add Order table more table
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " ADD cpf_order_number varchar(255)");
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " ADD cpf_settled int(1) DEFAULT 0");
-		
-		// Greate Checkout Payform Session databasetable
-		$db->Execute( "CREATE TABLE IF NOT EXISTS checkoutfinland_session (`cpf_id` INT(11) NOT NULL AUTO_INCREMENT, `cpf_order_number` VARCHAR(50) NOT NULL, `cpf_cart` TEXT NOT NULL, `sendto` INT(11) NOT NULL DEFAULT '0', `billto` INT(11) NOT NULL DEFAULT '0', `customer_id` INT(11) NOT NULL DEFAULT '0',`shipping_details` VARCHAR(500) NOT NULL, `status` INT(5) NOT NULL DEFAULT '0', `coupon` INT(3) DEFAULT '0', PRIMARY KEY (`cpf_id`))");		
 	}
 
 	function remove()
 	{
 		global $db;
 		$db->Execute("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " DROP COLUMN cpf_order_number");
-		$db->Execute("ALTER TABLE " . TABLE_ORDERS . " DROP COLUMN cpf_settled");
-		$db->Execute("DROP TABLE IF EXISTS checkoutfinland_session");		
 	}
 
 	function keys()
@@ -374,7 +350,6 @@ class checkoutfinland
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_ZONE', 
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED',
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_AUTHORIZED');	
-					// 'MODULE_PAYMENT_CHECKOUTFINLAND_LOGGING');		
 	}
 	
 	function get_error()
@@ -399,7 +374,6 @@ class checkoutfinland
                 'amount' => $this->amount,
                 'currency' => $this->currency,
                 'language' => $this->language,
-                // nida 'items' => $this->items,
 				'items' => $this->getOrderItems($order),
                 'customer' => [
                     'firstName' => $order->customer['firstname'],
@@ -514,8 +488,8 @@ class checkoutfinland
         $items = [];
         foreach ($this->itemArgs($order) as $key => $item) {
             $items[] = array(
-				'productCode'	=> $item['code'],	
 				'description'	=> $item['title'],
+				'productCode'	=> $item['code'],	
 				'units' 		=> $item['qty'],				
 				'unitPrice'		=> intval($item['price']),
 				'vatPercentage' => $item['vat'],
@@ -538,16 +512,16 @@ class checkoutfinland
 		// Array order items, tax  and price
         $items = array();		
         foreach ($order->products as $key => $item) {
-		$item_final_price = $item['final_price'] *100 ;
+		$item_final_price = number_format($item['final_price'], 2, '.', '')*100;	
+		//$item_final_price = $item['final_price'] *100 ;
 		$item_tax = $item['tax'];
-		$item_price = round($item_final_price * ($item_tax/100+1));	
+		$item_price = $item_final_price * ($item_tax/100+1);	
 		$itemqyt   += $item['qty'];
 		$total_check  +=  $item_price * $item['qty'];
-			
             if ($order_subtotal == 0) {
                 $items[] = array(
-                    'title' => $item['model'],
-                    'code' => $item['name'],
+                    'title' => $item['name'],
+                    'code' => $item['model'],
                     'qty' => floatval($item['qty']),
                     'price' => 0,
                     'vat' => 0,
@@ -556,8 +530,8 @@ class checkoutfinland
                 );
             } else {
                 $items[] = array(
-                    'title' => $item['model'],
-                    'code' => $item['name'],
+                    'title' => $item['name'],
+                    'code' => $item['model'],
                     'qty' => floatval($item['qty']),
                     'price' => intval($item_price),
                     'vat' => round(floatval($item_tax)),
@@ -568,21 +542,20 @@ class checkoutfinland
         }
 		
 		//Add shipping to product breakdown
-        $shippingcost = $order->info['shipping_cost'];
-		$shipping_tax = $order->info['shipping_tax'];
+		$shipping_price = number_format($order->info['shipping_cost'], 2, '.', '')*100;
+		$shipping_tax_total = number_format($order->info['shipping_tax'], 2, '.', '')*100;
+		$shipping_tax = ($shipping_tax_total/($shipping_price - $shipping_tax_total))*100;
 		
-	 		if (DISPLAY_PRICE_WITH_TAX != 'true'){
-				$shipping_price = ($shippingcost + $shipping_tax) * 100;
-	 			$shipping_tax = ($shipping_tax/$shippingcost)*100;
-		 	}
-		 	else{
-		 		$shipping_price = $shippingcost * 100;
-		 		$shipping_tax = ($shipping_tax/($shippingcost-$shipping_tax))*100;
-		 	}		
-	 	if($shippingcost > 0 ){
+	 	if (DISPLAY_PRICE_WITH_TAX == 'true') {
+			$shipping_price = $shipping_price;
+	 	} else {
+			$shipping_price = $shipping_price + $shipping_tax_total;
+	 	}		
+
+	 	if($shipping_price > 0 ){
             $items[] = array(
-                'title' => $order->info['shipping_module_code'],
-                'code' =>  $shippingLabel = $order->info['shipping_method'],
+                'title' => $shippingLabel = $order->info['shipping_method'], 
+                'code' =>  $order->info['shipping_module_code'],
                 'qty' => 1,
                 'price' => intval($shipping_price),
                 'vat' => round(floatval($shipping_tax)),
@@ -592,7 +565,7 @@ class checkoutfinland
 		$total_check += $shipping_price; 	
 		}
 		
-		//Add loworderfee breakdown
+		// Add loworderfee breakdown
 		// Check if there is a group discount enabled
 		foreach ($order_totals as $o_total)
 		{
@@ -607,16 +580,16 @@ class checkoutfinland
 					if (DISPLAY_PRICE_WITH_TAX == 'true')
 					{
 						$loworderpretax_price =  ($o_total['value'] / ($loworder_tax_rate/100+1)) * 100;
-						$loworderprice = $o_total['value'] * 100;
+						//$loworderprice = $o_total['value'] * 100;
 					}
 					else
 					{
 						$loworderpretax_price = $o_total['value'] * 100;
-						$loworderprice = ($o_total['value'] * ($loworder_tax_rate/100+1)) * 100;
+						//$loworderprice = ($o_total['value'] * ($loworder_tax_rate/100+1)) * 100;
 					}
 					$items[] = array(
-						'title' => '',
-						'code' => MODULE_PAYMENT_CHECKOUTFINLAND_LOWORDER_TEXT,
+						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_LOWORDER_TEXT,
+						'code' => '',
 						'qty' => 1,
 						'price' => $loworderpretax_price,
 						'vat' => round(floatval($loworder_tax_rate)),
@@ -624,8 +597,44 @@ class checkoutfinland
 						'type' => 1,
 					);
 					$total_check += $loworderpretax_price;
+
 				}
 			}
+				if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
+				{
+					if(isset($o_total['value']) && $o_total['value'] > 0)
+					{
+						$order_total_sub_total = $o_total['value'];
+						}
+				}			
+			
+		//Add group discount pricing breakdown
+		if($o_total['code'] == 'ot_group_pricing')
+			{
+				if($o_total['value'] > 0)
+				{
+					$group_amount_format = number_format($o_total['value'], 2, '.', '') * 100;
+					
+   					if (DISPLAY_PRICE_WITH_TAX == 'true')
+					{
+						$group_amount = $group_amount_format;
+					}
+					else
+					{
+						$group_amount = $group_amount_format + $order_total_sub_total;
+					}				
+					$items[] = array(
+						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_GROUP_TEXT,
+						'code' => '',
+						'qty' => -1,
+						'price' => intval($group_amount),
+						'vat' => 0,
+						'discount' => 0,
+						'type' => 4,
+					);			
+					$total_check -= $group_amount;					
+				}
+			}				
 			
 			else if(isset($o_total['code']) && $o_total['code'] == 'ot_shipping')
 			{
@@ -633,14 +642,14 @@ class checkoutfinland
 				{
 					$discount_amount_shipping = $o_total['value'];
 				}
-			}	
-			else if(isset($o_total['code']) && $o_total['code'] == 'ot_total')
+			}			
+			else if(isset($o_total['code']) && $o_total['code'] == 'ot_group_pricing')
 			{
 				if(isset($o_total['value']) && $o_total['value'] > 0)
 				{
-					$total_amount = $o_total['value'];
+					$group_discount_amount = $o_total['value'];
 				}
-			}
+			}				
 			else if(isset($o_total['code']) && $o_total['code'] == 'ot_coupon')
 			{
 				if(isset($o_total['value']) && $o_total['value'] > 0)
@@ -654,9 +663,17 @@ class checkoutfinland
 				{
 					$shiping_ot_tax = $o_total['value'];
 				}
-			}			
+			}
+
+			else if(isset($o_total['code']) && $o_total['code'] == 'ot_total')
+			{
+				if(isset($o_total['value']) && $o_total['value'] > 0)
+				{
+					$total_amount = $o_total['value'];
+				}
+			}	
 		}
-		
+			
 		//Add coupon breakdown
 		if (abs(isset($_SESSION['cc_id']))){
 			$sql = "select * 
@@ -668,11 +685,19 @@ class checkoutfinland
 			$sql = $db->bindVars($sql, ':couponID:', $_SESSION['cc_id'], 'integer');
 			$coupon = $db->Execute($sql);
 			$coupon_product_count    = $coupon->fields['coupon_product_count'];
-			$coupon_amount 	 = $coupon->fields['coupon_amount'];
+			
 			$coupon_tax_rate = $coupon->fields['tax_rate'];
+			$coupon_code     = $coupon->fields['coupon_code'];
 			$coupon_amount_formatted = number_format($coupon_amount, 2, '.', '');
 			$coupon_shipping_tax = zen_round($shipping_tax, $decimals) * 100 ;
 			$coupon_amount_shipping = $discount_amount_shipping * 100;
+			
+			if (DISPLAY_PRICE_WITH_TAX == 'true') {
+				$coupon_amount 	 = $coupon_amount_formatted * 100;
+			} else {
+				$coupon_amount 	 = $coupon->fields['coupon_amount'];
+			}			
+			
 
 			//Variable to compare product discount calculation to total amount of the order
 			$coupon_result = 0;	
@@ -683,9 +708,9 @@ class checkoutfinland
 				case 'F': // unit amount
 					// One by one  unit amount total
 					if ($coupon_product_count == 1) {
-						$coupon_result = $coupon_amount_formatted * $itemqyt * 100;
+						$coupon_result = $coupon_amount * $itemqyt * 100;
 					} else {
-						$coupon_result = $coupon_amount_formatted * 100;
+						$coupon_result = $coupon_amount;
 					}
 				break;
 				// amount off and free shipping	
@@ -702,8 +727,8 @@ class checkoutfinland
 						$coupon_result = ($coupon_amount_formatted + $discount_amount_shipping) * 100;
 					}
 				$items[] = array(
-					'title' => '',
-					'code' => MODULE_PAYMENT_CHECKOUTFINLAND_FREE_SHPING,
+					'title' => MODULE_PAYMENT_CHECKOUTFINLAND_FREE_SHPING,
+					'code' => '',
 					'qty' => 1,
 					'price' => $O_shippingprice,
 					'vat' => 0,
@@ -739,8 +764,8 @@ class checkoutfinland
 						$coupon_result = zen_round($coupon_result, $decimals) * 100;
 					
 				$items[] = array(
-					'title' => '',
-					'code' => MODULE_PAYMENT_CHECKOUTFINLAND_FREE_SHPING,
+					'title' => MODULE_PAYMENT_CHECKOUTFINLAND_FREE_SHPING,
+					'code' => '',
 					'qty' => 1,
 					'price' => $E_shipping_price,
 					'vat' => round(floatval($E_shipping_tax)),
@@ -752,8 +777,8 @@ class checkoutfinland
 			}// end switch
 			
             $items[] = array(
-                'title' => '',
-                'code' => MODULE_PAYMENT_CHECKOUTFINLAND_COUPON_TEXT,
+                'title' => MODULE_PAYMENT_CHECKOUTFINLAND_COUPON_TEXT,
+                'code' => $coupon_code,
                 'qty' => -1,
                 'price' => $coupon_result,
 				'vat' => 0,
@@ -771,13 +796,13 @@ class checkoutfinland
 			$gv_order = $db->Execute($gv_query);
 			
 			// Gift amonut total	
-			//$gv_order_amount = number_format($gv_order->fields['amount'], 2, '.', '');
+			$gv_order_amount = number_format($gv_order->fields['amount'], 2, '.', '') .'€';
 			$gv_amount = $_SESSION['cot_gv'] * 100;
 			
 			// if tax is to be calculated on purchased GVs, calculate it
             $items[] = array(
-                'title' => '',
-                'code' => MODULE_PAYMENT_CHECKOUTFINLAND_GIFT_TEXT,
+                'title' => MODULE_PAYMENT_CHECKOUTFINLAND_GIFT_TEXT,
+                'code' => $gv_order_amount,
                 'qty' => -1,
                 'price' => $gv_amount,
  				'vat' => 0,
@@ -789,13 +814,12 @@ class checkoutfinland
 
         // Add reward points breakdown
 		if ($_SESSION['redeem_value'] > 0) {
-
-			$redem_value = $_SESSION['redeem_value'] * 100;
-			
+			//$redem_value = $_SESSION['redeem_value'] * 100;
+			$redem_value = number_format($_SESSION['redeem_value'], 2, '.', '') * 100;
 			// if tax is to be calculated on purchased GVs, calculate it
             $items[] = array(
-                'title' => '',
-                'code' => MODULE_PAYMENT_CHECKOUTFINLAND_REWARD_POINT_TEXT,
+                'title' => MODULE_PAYMENT_CHECKOUTFINLAND_REWARD_POINT_TEXT,
+                'code' => '',
                 'qty' => -1,
                 'price' => $redem_value,
  				'vat' => 0,
@@ -806,19 +830,27 @@ class checkoutfinland
         }		
 		
 		// Add sumround breakdown
-		if ($this->amount > $total_check)  {
-			$sum_round = $this->amount - $total_check;
-			
-            $items[] = array(
-                'title' => '',
-                'code' => 'sumround',
-                'qty' => 1,
-                'price' => intval($sum_round),
+		if ($this->amount !== $total_check)  {
+			if ($this->amount > $total_check)  {
+				$sum_round_count = $this->amount - intval($total_check);
+				$qty = 1;
+		    }
+			if ($this->amount < $total_check)  {
+				$sum_round_count =  intval($total_check - $this->amount);
+				$qty = -1;
+			}
+			$sum_round = round(floatval($sum_round_count));
+			$items[] = array(
+                'title' => 'sumround',
+                'code' => '',
+                'qty' => $qty,
+                'price' => $sum_round,
 				'vat' => 0,
                 'discount' => 0,
                 'type' => 1,
                 );
-			}		
+			$total_check += $sum_round;
+			}
         return $items;
     }// end itemArgs($order)
 } // end class checkoutfinland
@@ -862,4 +894,5 @@ class Signature
         }
     }
 }
+
 ?>
