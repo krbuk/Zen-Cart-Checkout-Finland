@@ -138,7 +138,7 @@ class checkoutfinland
 		$decimals = $currencies->get_decimal_places($_SESSION['currency']);
 		//$amount = zen_round($order->info['total'], $decimals);
 		$amount = number_format($order->info['total'], 2, '.', '')*100;
-		$this->amount = $amount;
+		$this->amount = intval($amount);
 		// ********************************
 		// Op Bank Payment Checkout Finland
 		// ********************************		
@@ -515,7 +515,7 @@ class checkoutfinland
 		$item_final_price = number_format($item['final_price'], 2, '.', '')*100;	
 		//$item_final_price = $item['final_price'] *100 ;
 		$item_tax = $item['tax'];
-		$item_price = $item_final_price * ($item_tax/100+1);	
+		$item_price = round($item_final_price * ($item_tax/100+1));		
 		$itemqyt   += $item['qty'];
 		$total_check  +=  $item_price * $item['qty'];
             if ($order_subtotal == 0) {
@@ -828,15 +828,16 @@ class checkoutfinland
             );			
 			$total_check -= $redem_value;
         }		
-		
+		$total_amount = round(number_format($total_check, 2, '.', ''));
+
 		// Add sumround breakdown
-		if ($this->amount !== $total_check)  {
-			if ($this->amount > $total_check)  {
-				$sum_round_count = $this->amount - intval($total_check);
+		if ($this->amount <> $total_amount)  {
+			if ($this->amount > $total_amount)  {
+				$sum_round_count = $this->amount - $total_amount;
 				$qty = 1;
 		    }
-			if ($this->amount < $total_check)  {
-				$sum_round_count =  intval($total_check - $this->amount);
+			if ($total_check > $this->amount)  {
+				$sum_round_count = $total_amount - $this->amount;
 				$qty = -1;
 			}
 			$sum_round = round(floatval($sum_round_count));
@@ -849,7 +850,6 @@ class checkoutfinland
                 'discount' => 0,
                 'type' => 1,
                 );
-			$total_check += $sum_round;
 			}
         return $items;
     }// end itemArgs($order)
