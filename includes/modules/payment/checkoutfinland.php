@@ -829,7 +829,6 @@ class checkoutfinland
             );			
 			$total_check -= $redem_value;
         }		
-<<<<<<< HEAD
 
 		// Add sumround breakdown
 		if ($this->amount <> $total_check)  {
@@ -842,20 +841,6 @@ class checkoutfinland
 			$total_check -= $sum_round_count;
 			$qty = -1;
         }
-=======
-		$total_amount = round(number_format($total_check, 2, '.', ''));
-
-		// Add sumround breakdown
-		if ($this->amount <> $total_amount)  {
-			if ($this->amount > $total_amount)  {
-				$sum_round_count = $this->amount - $total_amount;
-				$qty = 1;
-		    }
-			if ($total_check > $this->amount)  {
-				$sum_round_count = $total_amount - $this->amount;
-				$qty = -1;
-			}
->>>>>>> c625464a7fcbad1d7fb71c9c75f5e54f5c2fd1bd
 			$sum_round = round(floatval($sum_round_count));
 			$items[] = array(
                 'title' => 'summa pyöreä',
