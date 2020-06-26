@@ -138,7 +138,7 @@ class checkoutfinland
 		$decimals = $currencies->get_decimal_places($_SESSION['currency']);
 		//$amount = zen_round($order->info['total'], $decimals);
 		$amount = number_format($order->info['total'], 2, '.', '')*100;
-		$this->amount = $amount;
+		$this->amount = intval($amount);
 		// ********************************
 		// Op Bank Payment Checkout Finland
 		// ********************************		
@@ -512,9 +512,10 @@ class checkoutfinland
 		// Array order items, tax  and price
         $items = array();		
         foreach ($order->products as $key => $item) {
-		$item_final_price = $item['final_price'] *100 ;
+		$item_final_price = number_format($item['final_price'], 2, '.', '')*100;	
+		//$item_final_price = $item['final_price'] *100 ;
 		$item_tax = $item['tax'];
-		$item_price = round($item_final_price * ($item_tax/100+1));	
+		$item_price = round($item_final_price * ($item_tax/100+1));		
 		$itemqyt   += $item['qty'];
 		$total_check  +=  $item_price * $item['qty'];
             if ($order_subtotal == 0) {
@@ -544,6 +545,12 @@ class checkoutfinland
 		$shipping_price = number_format($order->info['shipping_cost'], 2, '.', '')*100;
 		$shipping_tax_total = number_format($order->info['shipping_tax'], 2, '.', '')*100;
 		$shipping_tax = ($shipping_tax_total/($shipping_price - $shipping_tax_total))*100;
+		
+	 	if (DISPLAY_PRICE_WITH_TAX == 'true') {
+			$shipping_price = $shipping_price;
+	 	} else {
+			$shipping_price = $shipping_price + $shipping_tax_total;
+	 	}		
 
 	 	if($shipping_price > 0 ){
             $items[] = array(
@@ -593,17 +600,29 @@ class checkoutfinland
 
 				}
 			}
-		//Add group pricing breakdown
-		if(isset($o_total['code']) && $o_total['code'] == 'ot_group_pricing')
-			{
-				if(isset($o_total['value']) && $o_total['value'] > 0)
+				if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
 				{
-					$group_discount_amount = $o_total['value'];
-					//$sql = "select * from " . TABLE_GROUP_PRICING ;
-					//$group_discount = $db->Execute($sql);
-					$group_name = $group_discount->fields['group_name'];
-					$group_discount_formatted = number_format($group_discount_amount, 2, '.', '');
-					$group_amount = $group_discount_formatted * 100 ;
+					if(isset($o_total['value']) && $o_total['value'] > 0)
+					{
+						$order_total_sub_total = $o_total['value'];
+						}
+				}			
+			
+		//Add group discount pricing breakdown
+		if($o_total['code'] == 'ot_group_pricing')
+			{
+				if($o_total['value'] > 0)
+				{
+					$group_amount_format = number_format($o_total['value'], 2, '.', '') * 100;
+					
+   					if (DISPLAY_PRICE_WITH_TAX == 'true')
+					{
+						$group_amount = $group_amount_format;
+					}
+					else
+					{
+						$group_amount = $group_amount_format + $order_total_sub_total;
+					}				
 					$items[] = array(
 						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_GROUP_TEXT,
 						'code' => '',
@@ -645,20 +664,15 @@ class checkoutfinland
 					$shiping_ot_tax = $o_total['value'];
 				}
 			}
-			else if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
-			{
-				if(isset($o_total['value']) && $o_total['value'] > 0)
-				{
-					$order_total_sub_total = $o_total['value'];
-					}
-			}
+
 			else if(isset($o_total['code']) && $o_total['code'] == 'ot_total')
 			{
 				if(isset($o_total['value']) && $o_total['value'] > 0)
 				{
-					$total_amount = $o_total['value'];
+					$total_amount = number_format($o_total['value'], 2, '.', '') * 100;
+
 				}
-			}				
+			}	
 		}
 			
 		//Add coupon breakdown
@@ -672,12 +686,19 @@ class checkoutfinland
 			$sql = $db->bindVars($sql, ':couponID:', $_SESSION['cc_id'], 'integer');
 			$coupon = $db->Execute($sql);
 			$coupon_product_count    = $coupon->fields['coupon_product_count'];
-			$coupon_amount 	 = $coupon->fields['coupon_amount'];
+			
 			$coupon_tax_rate = $coupon->fields['tax_rate'];
 			$coupon_code     = $coupon->fields['coupon_code'];
 			$coupon_amount_formatted = number_format($coupon_amount, 2, '.', '');
 			$coupon_shipping_tax = zen_round($shipping_tax, $decimals) * 100 ;
 			$coupon_amount_shipping = $discount_amount_shipping * 100;
+			
+			if (DISPLAY_PRICE_WITH_TAX == 'true') {
+				$coupon_amount 	 = $coupon_amount_formatted * 100;
+			} else {
+				$coupon_amount 	 = $coupon->fields['coupon_amount'];
+			}			
+			
 
 			//Variable to compare product discount calculation to total amount of the order
 			$coupon_result = 0;	
@@ -688,9 +709,9 @@ class checkoutfinland
 				case 'F': // unit amount
 					// One by one  unit amount total
 					if ($coupon_product_count == 1) {
-						$coupon_result = $coupon_amount_formatted * $itemqyt * 100;
+						$coupon_result = $coupon_amount * $itemqyt * 100;
 					} else {
-						$coupon_result = $coupon_amount_formatted * 100;
+						$coupon_result = $coupon_amount;
 					}
 				break;
 				// amount off and free shipping	
@@ -784,7 +805,6 @@ class checkoutfinland
                 'title' => MODULE_PAYMENT_CHECKOUTFINLAND_GIFT_TEXT,
                 'code' => $gv_order_amount,
                 'qty' => -1,
-
                 'price' => $gv_amount,
  				'vat' => 0,
                 'discount' => 0,
@@ -795,7 +815,8 @@ class checkoutfinland
 
         // Add reward points breakdown
 		if ($_SESSION['redeem_value'] > 0) {
-			$redem_value = $_SESSION['redeem_value'] * 100;
+			//$redem_value = $_SESSION['redeem_value'] * 100;
+			$redem_value = number_format($_SESSION['redeem_value'], 2, '.', '') * 100;
 			// if tax is to be calculated on purchased GVs, calculate it
             $items[] = array(
                 'title' => MODULE_PAYMENT_CHECKOUTFINLAND_REWARD_POINT_TEXT,
@@ -808,21 +829,28 @@ class checkoutfinland
             );			
 			$total_check -= $redem_value;
         }		
-		
+
 		// Add sumround breakdown
-		if ($this->amount > $total_check)  {
-			$sum_round_count = $this->amount - intval($total_check);
+		if ($this->amount <> $total_check)  {
+			if ($this->amount > $total_check)  {
+				$sum_round_count = $this->amount - $total_check;
+				$qty = 1;
+		    }
+        if ($total_check > $this->amount)  {
+			$sum_round_count = $total_check - $this->amount;
+			$total_check -= $sum_round_count;
+			$qty = -1;
+        }
 			$sum_round = round(floatval($sum_round_count));
 			$items[] = array(
-                'title' => 'sumround',
+                'title' => 'summa pyöreä',
                 'code' => '',
-                'qty' => 1,
+                'qty' => $qty,
                 'price' => $sum_round,
 				'vat' => 0,
                 'discount' => 0,
                 'type' => 1,
                 );
-			$total_check += $sum_round;
 			}
         return $items;
     }// end itemArgs($order)
