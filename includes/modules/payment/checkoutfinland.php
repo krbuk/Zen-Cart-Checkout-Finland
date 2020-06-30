@@ -366,7 +366,14 @@ class checkoutfinland
 	// ********************************	
     public function getBody()
     {
-		global $order, $currencies, $db, $order_totals;		
+		global $order, $currencies, $db, $order_totals;	
+		if (!isset($order->delivery['country']['iso_code_2'])) {
+			$order->delivery['street_address'] = $order->billing['street_address'];
+			$order->delivery['postcode'] = $order->billing['postcode'];
+			$order->delivery['city'] = $order->delivery['city'];
+			$order->delivery['state'] = $order->delivery['state'];
+			$order->delivery['country']['iso_code_2'] = $order->billing['country']['iso_code_2'];				
+		}		
         $body = json_encode(
             [
 				'stamp' => $this->order_stamp,
@@ -669,7 +676,8 @@ class checkoutfinland
 			{
 				if(isset($o_total['value']) && $o_total['value'] > 0)
 				{
-					$total_amount = $o_total['value'];
+					$total_amount = number_format($o_total['value'], 2, '.', '') * 100;
+
 				}
 			}	
 		}
@@ -828,21 +836,21 @@ class checkoutfinland
             );			
 			$total_check -= $redem_value;
         }		
-		$total_amount = round(number_format($total_check, 2, '.', ''));
 
 		// Add sumround breakdown
-		if ($this->amount <> $total_amount)  {
-			if ($this->amount > $total_amount)  {
-				$sum_round_count = $this->amount - $total_amount;
+		if ($this->amount <> $total_check)  {
+			if ($this->amount > $total_check)  {
+				$sum_round_count = $this->amount - $total_check;
 				$qty = 1;
 		    }
-			if ($total_check > $this->amount)  {
-				$sum_round_count = $total_amount - $this->amount;
-				$qty = -1;
-			}
+        if ($total_check > $this->amount)  {
+			$sum_round_count = $total_check - $this->amount;
+			$total_check -= $sum_round_count;
+			$qty = -1;
+        }
 			$sum_round = round(floatval($sum_round_count));
 			$items[] = array(
-                'title' => 'sumround',
+                'title' => 'summa pyöreä',
                 'code' => '',
                 'qty' => $qty,
                 'price' => $sum_round,
