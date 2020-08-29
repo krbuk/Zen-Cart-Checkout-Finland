@@ -172,9 +172,9 @@ class checkoutfinland
 		} 
 		else {
 			$decodedresponsebody = json_decode($responseBody);
-			echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
-			echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-		    echo '<pre>'; print_r(json_decode($body,true)); exit;	
+			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
+			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+			//echo '<pre>'; print_r(json_decode($body,true)); exit;	
 			
 		}
 		// Starting active payment icon
