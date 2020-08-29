@@ -172,9 +172,9 @@ class checkoutfinland
 		} 
 		else {
 			$decodedresponsebody = json_decode($responseBody);
-			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
-			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-		    //echo '<pre>'; print_r(json_decode($body,true)); exit;	
+			echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
+			echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+		    echo '<pre>'; print_r(json_decode($body,true)); exit;	
 			
 		}
 		// Starting active payment icon
@@ -366,7 +366,14 @@ class checkoutfinland
 	// ********************************	
     public function getBody()
     {
-		global $order, $currencies, $db, $order_totals;		
+		global $order, $currencies, $db, $order_totals;	
+		if (!isset($order->delivery['country']['iso_code_2'])) {
+			$order->delivery['street_address'] = $order->billing['street_address'];
+			$order->delivery['postcode'] = $order->billing['postcode'];
+			$order->delivery['city'] = $order->delivery['city'];
+			$order->delivery['state'] = $order->delivery['state'];
+			$order->delivery['country']['iso_code_2'] = $order->billing['country']['iso_code_2'];				
+		}		
         $body = json_encode(
             [
 				'stamp' => $this->order_stamp,
@@ -544,7 +551,7 @@ class checkoutfinland
 		//Add shipping to product breakdown
 		$shipping_price = number_format($order->info['shipping_cost'], 2, '.', '')*100;
 		$shipping_tax_total = number_format($order->info['shipping_tax'], 2, '.', '')*100;
-		$shipping_tax = ($shipping_tax_total/($shipping_price - $shipping_tax_total))*100;
+
 		
 	 	if (DISPLAY_PRICE_WITH_TAX == 'true') {
 			$shipping_price = $shipping_price;
@@ -553,8 +560,9 @@ class checkoutfinland
 	 	}		
 
 	 	if($shipping_price > 0 ){
+		$shipping_tax = ($shipping_tax_total/($shipping_price - $shipping_tax_total))*100;			
             $items[] = array(
-                'title' => $shippingLabel = $order->info['shipping_method'], 
+                'title' => $order->info['shipping_method'], 
                 'code' =>  $order->info['shipping_module_code'],
                 'qty' => 1,
                 'price' => intval($shipping_price),
@@ -580,12 +588,10 @@ class checkoutfinland
 					if (DISPLAY_PRICE_WITH_TAX == 'true')
 					{
 						$loworderpretax_price =  ($o_total['value'] / ($loworder_tax_rate/100+1)) * 100;
-						//$loworderprice = $o_total['value'] * 100;
 					}
 					else
 					{
 						$loworderpretax_price = $o_total['value'] * 100;
-						//$loworderprice = ($o_total['value'] * ($loworder_tax_rate/100+1)) * 100;
 					}
 					$items[] = array(
 						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_LOWORDER_TEXT,
@@ -597,7 +603,6 @@ class checkoutfinland
 						'type' => 1,
 					);
 					$total_check += $loworderpretax_price;
-
 				}
 			}
 				if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
@@ -694,12 +699,11 @@ class checkoutfinland
 			$coupon_amount_shipping = $discount_amount_shipping * 100;
 			
 			if (DISPLAY_PRICE_WITH_TAX == 'true') {
-				$coupon_amount 	 = $coupon_amount_formatted * 100;
+				$coupon_amount = $coupon_amount_formatted * 100;
 			} else {
-				$coupon_amount 	 = $coupon->fields['coupon_amount'];
+				$coupon_amount = $coupon->fields['coupon_amount'];
 			}			
 			
-
 			//Variable to compare product discount calculation to total amount of the order
 			$coupon_result = 0;	
 			switch ($coupon->fields['coupon_type']){
@@ -843,7 +847,7 @@ class checkoutfinland
         }
 			$sum_round = round(floatval($sum_round_count));
 			$items[] = array(
-                'title' => 'summa pyöreä',
+                'title' => MODULE_PAYMENT_CHECKOUTFINLAND_SUM_ROUND,
                 'code' => '',
                 'qty' => $qty,
                 'price' => $sum_round,
