@@ -172,9 +172,10 @@ class checkoutfinland
 		} 
 		else {
 			$decodedresponsebody = json_decode($responseBody);
+			// Control sending data erase the " // "
 			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
 			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-			//echo '<pre>'; print_r(json_decode($body,true)); exit;	
+		    //echo '<pre>'; print_r(json_decode($body,true)); exit;	
 			
 		}
 		// Starting active payment icon
@@ -372,8 +373,9 @@ class checkoutfinland
 			$order->delivery['postcode'] = $order->billing['postcode'];
 			$order->delivery['city'] = $order->delivery['city'];
 			$order->delivery['state'] = $order->delivery['state'];
-			$order->delivery['country']['iso_code_2'] = $order->billing['country']['iso_code_2'];				
-		}		
+			$order->delivery['country']['iso_code_2'] = $order->billing['country']['iso_code_2'];
+		}
+		
         $body = json_encode(
             [
 				'stamp' => $this->order_stamp,
@@ -535,7 +537,8 @@ class checkoutfinland
                     'discount' => 0,
                     'type' => 1,
                 );
-            } else {
+            } 
+			else {
                 $items[] = array(
                     'title' => $item['name'],
                     'code' => $item['model'],
@@ -555,7 +558,8 @@ class checkoutfinland
 		
 	 	if (DISPLAY_PRICE_WITH_TAX == 'true') {
 			$shipping_price = $shipping_price;
-	 	} else {
+	 	} 
+		else {
 			$shipping_price = $shipping_price + $shipping_tax_total;
 	 	}		
 
@@ -584,14 +588,13 @@ class checkoutfinland
 					$query = "select * from " . TABLE_CONFIGURATION . " where configuration_key='MODULE_ORDER_TOTAL_LOWORDERFEE_TAX_CLASS'";
 					$loworder_tax = $db->Execute($query);
 					$loworder_tax_rate = zen_get_tax_rate($loworder_tax->fields['configuration_value'], $order->billing['country']['id'], $order->billing['zone_id']);
-					
+					$loworder_price_format = number_format($o_total['value'], 2, '.', '') * 100;
 					if (DISPLAY_PRICE_WITH_TAX == 'true')
 					{
-						$loworderpretax_price =  ($o_total['value'] / ($loworder_tax_rate/100+1)) * 100;
+						$loworderpretax_price = $loworder_price_format;
 					}
-					else
-					{
-						$loworderpretax_price = $o_total['value'] * 100;
+					else {
+						$loworderpretax_price =  ($loworder_price_format / ($loworder_tax_rate/100+1)) * 100;
 					}
 					$items[] = array(
 						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_LOWORDER_TEXT,
@@ -605,12 +608,12 @@ class checkoutfinland
 					$total_check += $loworderpretax_price;
 				}
 			}
-				if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
-				{
-					if(isset($o_total['value']) && $o_total['value'] > 0)
+		if(isset($o_total['code']) && $o_total['code'] == 'ot_subtotal')
+			{
+				if(isset($o_total['value']) && $o_total['value'] > 0)
 					{
 						$order_total_sub_total = $o_total['value'];
-						}
+					}
 				}			
 			
 		//Add group discount pricing breakdown
@@ -622,11 +625,10 @@ class checkoutfinland
 					
    					if (DISPLAY_PRICE_WITH_TAX == 'true')
 					{
-						$group_amount = $group_amount_format;
+						$group_amount = round(floatval($group_amount_format));
 					}
-					else
-					{
-						$group_amount = $group_amount_format + $order_total_sub_total;
+					else {
+						$group_amount = round(floatval($group_amount_format + $order_total_sub_total));
 					}				
 					$items[] = array(
 						'title' => MODULE_PAYMENT_CHECKOUTFINLAND_GROUP_TEXT,
@@ -675,7 +677,6 @@ class checkoutfinland
 				if(isset($o_total['value']) && $o_total['value'] > 0)
 				{
 					$total_amount = number_format($o_total['value'], 2, '.', '') * 100;
-
 				}
 			}	
 		}
@@ -700,7 +701,8 @@ class checkoutfinland
 			
 			if (DISPLAY_PRICE_WITH_TAX == 'true') {
 				$coupon_amount = $coupon_amount_formatted * 100;
-			} else {
+			} 
+			else {
 				$coupon_amount = $coupon->fields['coupon_amount'];
 			}			
 			
@@ -714,7 +716,8 @@ class checkoutfinland
 					// One by one  unit amount total
 					if ($coupon_product_count == 1) {
 						$coupon_result = $coupon_amount * $itemqyt * 100;
-					} else {
+					} 
+					else {
 						$coupon_result = $coupon_amount;
 					}
 				break;
@@ -751,7 +754,7 @@ class checkoutfinland
 						$coupon_shiping_tax = ($shippingcost/100)*($coupon_amount);
 						$coupon_result =  ($coupon_cost + $coupon_shiping_tax) ;
 						$coupon_result = zen_round($coupon_result, $decimals) * 100;
-						}	
+					}	
 					    
 					else {
 						$coupon_result = ($order_subtotal/100)*($coupon_amount_formatted);
@@ -840,11 +843,10 @@ class checkoutfinland
 				$sum_round_count = $this->amount - $total_check;
 				$qty = 1;
 		    }
-        if ($total_check > $this->amount)  {
-			$sum_round_count = $total_check - $this->amount;
-			$total_check -= $sum_round_count;
-			$qty = -1;
-        }
+            else if ($total_check > $this->amount)  {
+				$sum_round_count = $total_check - $this->amount;
+				$qty = -1;
+		    }
 			$sum_round = round(floatval($sum_round_count));
 			$items[] = array(
                 'title' => MODULE_PAYMENT_CHECKOUTFINLAND_SUM_ROUND,
