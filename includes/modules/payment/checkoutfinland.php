@@ -787,7 +787,7 @@ class checkoutfinland
                 'qty' => -1,
                 'price' => $coupon_result,
                 'vat' => 0,
-				'discount' => 0,
+                'discount' => 0,
                 'type' => 4,
             );
 			$total_check -= $coupon_result;
