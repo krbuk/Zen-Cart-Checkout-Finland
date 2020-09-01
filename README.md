@@ -1,9 +1,8 @@
 # OP Bank Payment Zen-Cart Module
 Checkout Finland's payment methods for your Zen-Cart web store
 Always perform a backup of your database and source code before installing any payment extensions.
- *This module works on Zen-Cart 1.5.6.
-If you find some bug please inform me.
-Op Bank Checkout Finland payments old module will closed 30.06.2020.
+ *This module works on Zen-Cart 1.5.6. If you find some bug please inform me.
+Before account activation use test mode if Okay call to Checkout customer service and ask to account activations.
 
  * www.checkout.fi
  * Use Guzzle HTTP client v6 installed with Composer https://github.com/guzzle/guzzle/
@@ -15,4 +14,4 @@ Op Bank Checkout Finland payments old module will closed 30.06.2020.
  * @package checkout
  * @copyright Copyright 2003-2019 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: Nida Verkkopalvelu (www.nida.fi) / Krbuk 2020 May 19 Modified in v1.5.6c
+ * @version $Id: Nida Verkkopalvelu (www.nida.fi) / Krbuk 2020 Sep 1 Modified in v1.5.7
