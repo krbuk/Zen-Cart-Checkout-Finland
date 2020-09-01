@@ -49,17 +49,17 @@ class checkoutfinland
 
             }
         }
-		$this->form_action_url  		= "https://api.checkout.fi/payments/";
-		$this->merchantId 				= defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') ? MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS : null;
-		$this->privateKey 				= defined('MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN') ? MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN : null;
-		$this->aggregate_merchant_id    = defined('MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA') ? MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA : null;
-		$this->aggregate_secret_key     = defined('MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN') ? MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN : null;
+		$this->form_action_url = "https://api.checkout.fi/payments/";
+		$this->merchantId = defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') ? MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS : null;
+		$this->privateKey = defined('MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN') ? MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN : null;
+		$this->aggregate_merchant_id = defined('MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA') ? MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA : null;
+		$this->aggregate_secret_key = defined('MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN') ? MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN : null;
 		$this->shop_in_Shop_merchant_id = defined('MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA') ? MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA : null;
-		$this->return_address 			= zen_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL');
-		$this->cancel_address 			= zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL');
-		$this->currency    				= $order->info['currency'];			
-		$this->language					= ($_SESSION['languages_code'] == 'fi') ? 'FI' : 'EN';
-		$this->order_status 			= defined('MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED') ? MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED : null;		
+		$this->return_address = zen_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL');
+		$this->cancel_address = zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL');
+		$this->currency = $order->info['currency'];			
+		$this->language = ($_SESSION['languages_code'] == 'fi') ? 'FI' : 'EN';
+		$this->order_status = defined('MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED') ? MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED : null;		
 		
 		// Client header
 		$stack = $this->createLoggerStack($args);
@@ -88,7 +88,7 @@ class checkoutfinland
 		//Only EUR orders accepted
 		$currency = $order->info['currency'];
 		if(!(in_array($currency, $this->allowed_currencies)))
-			$this->enabled = false;
+		$this->enabled = false;
     }	
 	
 	function javascript_validation()
@@ -115,8 +115,8 @@ class checkoutfinland
 		global $db;
 		if (!isset($this->_check))
 		{
-			$check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS'");
-			$this->_check = $check_query->RecordCount();
+		  $check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS'");
+		  $this->_check = $check_query->RecordCount();
 		}
 		return $this->_check;
 	}
@@ -175,8 +175,7 @@ class checkoutfinland
 			// Control sending data erase the " // "
 			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
 			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-		    //echo '<pre>'; print_r(json_decode($body,true)); exit;	
-			
+			//echo '<pre>'; print_r(json_decode($body,true)); exit;
 		}
 		// Starting active payment icon
 		$html  = "</form>\n";
@@ -306,9 +305,7 @@ class checkoutfinland
 			{
 				// Update order history
 				$comments = zen_db_prepare_input(MODULE_PAYMENT_CHECKOUTFINLAND_TITLE_STATUS .$payment_status[$_GET['checkout-status']] .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_METHOD .$_GET['checkout-provider'] . " , " .MODULE_PAYMENT_CHECKOUTFINLAND_REFERENCE_NUMBER .$_GET['checkout-reference'] . ".");
-			
 				$db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = CONCAT(comments, '" . zen_db_input($comments) . "') where orders_id = '" . $insert_id . "'");
-			
 			}
 			else
 			{
@@ -789,8 +786,8 @@ class checkoutfinland
                 'code' => $coupon_code,
                 'qty' => -1,
                 'price' => $coupon_result,
-				'vat' => 0,
-                'discount' => 0,
+                'vat' => 0,
+				'discount' => 0,
                 'type' => 4,
             );
 			$total_check -= $coupon_result;
@@ -813,7 +810,7 @@ class checkoutfinland
                 'code' => $gv_order_amount,
                 'qty' => -1,
                 'price' => $gv_amount,
- 				'vat' => 0,
+                'vat' => 0,
                 'discount' => 0,
                 'type' => 4,
             );			
@@ -830,7 +827,7 @@ class checkoutfinland
                 'code' => '',
                 'qty' => -1,
                 'price' => $redem_value,
- 				'vat' => 0,
+                'vat' => 0,
                 'discount' => 0,
                 'type' => 4,
             );			
@@ -853,7 +850,7 @@ class checkoutfinland
                 'code' => '',
                 'qty' => $qty,
                 'price' => $sum_round,
-				'vat' => 0,
+                'vat' => 0,
                 'discount' => 0,
                 'type' => 1,
                 );
