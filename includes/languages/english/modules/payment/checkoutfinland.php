@@ -5,7 +5,7 @@ define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION', 'Checkout - ASETUKSET 
        <a href="https://extranet.checkout.fi/" target="_blank">Log in to your Checkout account</a>');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_HEADER_ERROR', 'Error!');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_ERROR', 'Error in Checkout payment!');
-define('MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST', 'Attention: Test');
+define('MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST', 'Attention: test mode');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_ERROR', 'Payment failed.');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_API_ERROR', '<b>ERROR</b> Op Bank Checkout online payment -HMAC- signatures incorrect!');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_REWARD_POINT_TEXT', 'Reward points');

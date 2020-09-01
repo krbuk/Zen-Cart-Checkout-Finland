@@ -5,7 +5,7 @@ define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION', 'Checkout - ASETUKSET 
        <a href="https://extranet.checkout.fi/" target="_blank">Kirjaudu Checkout-tiliisi</a>');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_HEADER_ERROR', 'Virhe!');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_ERROR', 'Virhe Checkout -maksussa!');
-define('MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST', 'Huomio: Test');
+define('MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST', 'Huomio: Testitila');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_ERROR', 'Maksu epäonnistui.');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_API_ERROR', '<b>VIRHE</b> Checkout verkkomaksu -HMAC-allekirjoituksiin väärin!');
 define('MODULE_PAYMENT_CHECKOUTFINLAND_REWARD_POINT_TEXT', 'Bonuspisteet');

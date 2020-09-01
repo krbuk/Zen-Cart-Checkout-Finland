@@ -16,7 +16,7 @@
  * @package checkout
  * @copyright Copyright 2003-2019 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: Nida Verkkopalvelu (www.nida.fi) / Krbuk 2020 May 19 Modified in v1.5.6c $
+ * @version $Id: Nida Verkkopalvelu (www.nida.fi) / krbuk 2020 Sep 1 Modified in v1.5.7 $
  */
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Uri;
@@ -42,13 +42,6 @@ class checkoutfinland
 		$this->description = '<strong>Checkout Finland ' . $this->moduleVersion . '</strong><br><br>' .MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION;
 		$this->enabled  = (defined('MODULE_PAYMENT_CHECKOUTFINLAND_STATUS') && MODULE_PAYMENT_CHECKOUTFINLAND_STATUS == 'Kyllä') ? true : false;		
 		$this->sort_order = defined('MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER') ? MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER : null;
-        if (IS_ADMIN_FLAG === true) {
-            $this->title = MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_TITLE;
-            if (defined('MODULE_PAYMENT_CHECKOUTFINLAND_STATUS')) {
-                if (defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') == '375917' && MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA == '695861' && defined('MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA') == '695874') $this->title .= '<span class="alert">' .MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST .'</span>';
-
-            }
-        }
 		$this->form_action_url = "https://api.checkout.fi/payments/";
 		$this->merchantId = defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') ? MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS : null;
 		$this->privateKey = defined('MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN') ? MODULE_PAYMENT_CHECKOUTFINLAND_TURVA_AVAIN : null;
@@ -59,7 +52,7 @@ class checkoutfinland
 		$this->cancel_address = zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL');
 		$this->currency = $order->info['currency'];			
 		$this->language = ($_SESSION['languages_code'] == 'fi') ? 'FI' : 'EN';
-		$this->order_status = defined('MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED') ? MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED : null;		
+		$this->order_status = defined('MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED') ? MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED : null;			
 		
 		// Client header
 		$stack = $this->createLoggerStack($args);
@@ -72,7 +65,8 @@ class checkoutfinland
             ]
         );
         if (null === $this->sort_order) return false;	
-		
+		if (IS_ADMIN_FLAG === true && (defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') == '375917' || 			defined('MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA') == '695861' || defined('MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA') == '695874')) $this->title .= '<span class="alert">' .MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST .'</span>';
+			
 		 // determine order-status for transactions
 		if ((int)MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED > 0)
 		{
@@ -88,7 +82,7 @@ class checkoutfinland
 		//Only EUR orders accepted
 		$currency = $order->info['currency'];
 		if(!(in_array($currency, $this->allowed_currencies)))
-		$this->enabled = false;
+			$this->enabled = false;
     }	
 	
 	function javascript_validation()
@@ -115,8 +109,8 @@ class checkoutfinland
 		global $db;
 		if (!isset($this->_check))
 		{
-		  $check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS'");
-		  $this->_check = $check_query->RecordCount();
+			$check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_CHECKOUTFINLAND_STATUS'");
+			$this->_check = $check_query->RecordCount();
 		}
 		return $this->_check;
 	}
@@ -154,9 +148,8 @@ class checkoutfinland
 		} catch (\GuzzleHttp\Exception\ClientException $e) {
 			if ($e->hasResponse()) {
 				$response = $e->getResponse();
-				echo "Unexpected HTTP status code: {$response->getStatusCode()}\n\n";
-				echo '<a href="index.php?main_page=contact_us" title="' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .'" target="_blank"><strong>' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .'</strong></a>';
-				
+				echo 'Unexpected HTTP status code: {$response->getStatusCode()}\n\n';
+				echo '<a href="index.php?main_page=contact_us" title="' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .'" target="_blank"><strong>' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .' => ' .STORE_TELEPHONE_CUSTSERVICE.'</strong></a>';
 			}
 		}
   
@@ -172,11 +165,14 @@ class checkoutfinland
 		} 
 		else {
 			$decodedresponsebody = json_decode($responseBody);
-			// Control sending data erase the " // "
+			/**
+			*  Error control. Erase " // " and check to sending request data.
+			*/
 			//echo "\n\nRequest ID: {$response->getHeader('cof-request-id')[0]}\n\n" ."<br>";
 			//echo(json_encode(json_decode($responseBody), JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-			//echo '<pre>'; print_r(json_decode($body,true)); exit;
+		    //echo '<pre>'; print_r(json_decode($body,true)); exit;	
 		}
+		
 		// Starting active payment icon
 		$html  = "</form>\n";
 		$html .='<style>		
@@ -193,7 +189,6 @@ class checkoutfinland
 		.btn-success { display: none; } /*Submit button hidden */
 		</style>	
 		';
-		
 
 		// Provider payment group title	
 		$group_titles = [
@@ -272,7 +267,6 @@ class checkoutfinland
 		</section>
 		';
 		$html .= '<div style="clear: both"></div>';
-
 		return $html;			
 }// end function process_button
 
@@ -305,7 +299,9 @@ class checkoutfinland
 			{
 				// Update order history
 				$comments = zen_db_prepare_input(MODULE_PAYMENT_CHECKOUTFINLAND_TITLE_STATUS .$payment_status[$_GET['checkout-status']] .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_METHOD .$_GET['checkout-provider'] . " , " .MODULE_PAYMENT_CHECKOUTFINLAND_REFERENCE_NUMBER .$_GET['checkout-reference'] . ".");
+			
 				$db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = CONCAT(comments, '" . zen_db_input($comments) . "') where orders_id = '" . $insert_id . "'");
+			
 			}
 			else
 			{
@@ -474,9 +470,7 @@ class checkoutfinland
 	
     public function jsonSerialize()
     {
-        return array_filter(get_object_vars($this), function ($item) {
-            return $item !== null;
-        });
+        return array_filter(get_object_vars($this), function ($item) { return $item !== null; } );
     }
 	
     protected function calculateHmac($params = [], $body = '')
@@ -552,7 +546,6 @@ class checkoutfinland
 		$shipping_price = number_format($order->info['shipping_cost'], 2, '.', '')*100;
 		$shipping_tax_total = number_format($order->info['shipping_tax'], 2, '.', '')*100;
 
-		
 	 	if (DISPLAY_PRICE_WITH_TAX == 'true') {
 			$shipping_price = $shipping_price;
 	 	} 
@@ -687,9 +680,9 @@ class checkoutfinland
 				where c.coupon_id=:couponID: and coupon_active='Y' 
 				and c.coupon_id = cd.coupon_id	";
 			$sql = $db->bindVars($sql, ':couponID:', $_SESSION['cc_id'], 'integer');
+			
 			$coupon = $db->Execute($sql);
 			$coupon_product_count    = $coupon->fields['coupon_product_count'];
-			
 			$coupon_tax_rate = $coupon->fields['tax_rate'];
 			$coupon_code     = $coupon->fields['coupon_code'];
 			$coupon_amount_formatted = number_format($coupon_amount, 2, '.', '');
@@ -710,7 +703,7 @@ class checkoutfinland
 //					$coupon_result = $coupon_tax_amount ;		
 //				break;
 				case 'F': // unit amount
-					// One by one  unit amount total
+				// One by one  unit amount total
 					if ($coupon_product_count == 1) {
 						$coupon_result = $coupon_amount * $itemqyt * 100;
 					} 
@@ -786,7 +779,7 @@ class checkoutfinland
                 'code' => $coupon_code,
                 'qty' => -1,
                 'price' => $coupon_result,
-                'vat' => 0,
+				'vat' => 0,
                 'discount' => 0,
                 'type' => 4,
             );
@@ -810,7 +803,7 @@ class checkoutfinland
                 'code' => $gv_order_amount,
                 'qty' => -1,
                 'price' => $gv_amount,
-                'vat' => 0,
+ 				'vat' => 0,
                 'discount' => 0,
                 'type' => 4,
             );			
@@ -819,7 +812,6 @@ class checkoutfinland
 
         // Add reward points breakdown
 		if ($_SESSION['redeem_value'] > 0) {
-			//$redem_value = $_SESSION['redeem_value'] * 100;
 			$redem_value = number_format($_SESSION['redeem_value'], 2, '.', '') * 100;
 			// if tax is to be calculated on purchased GVs, calculate it
             $items[] = array(
@@ -827,7 +819,7 @@ class checkoutfinland
                 'code' => '',
                 'qty' => -1,
                 'price' => $redem_value,
-                'vat' => 0,
+ 				'vat' => 0,
                 'discount' => 0,
                 'type' => 4,
             );			
@@ -850,13 +842,13 @@ class checkoutfinland
                 'code' => '',
                 'qty' => $qty,
                 'price' => $sum_round,
-                'vat' => 0,
+				'vat' => 0,
                 'discount' => 0,
                 'type' => 1,
                 );
 			}
         return $items;
-    }// end itemArgs($order)
+    } // end itemArgs($order)
 } // end class checkoutfinland
 
 // This is Op Bank Payment Checkout Finland module signature
@@ -898,5 +890,4 @@ class Signature
         }
     }
 }
-
 ?>
