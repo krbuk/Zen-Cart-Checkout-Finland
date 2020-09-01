@@ -1,13 +1,9 @@
 # OP Bank Payment Zen-Cart Module
 Checkout Finland's payment methods for your Zen-Cart web store
 Always perform a backup of your database and source code before installing any payment extensions.
-<<<<<<< HEAD
- *This module works on Zen-Cart 1.5.6. If you find some bug please inform me.
-=======
 
  *This module works on Zen-Cart 1.5.6 - 1.5.7 If you find some bug please inform me.
  
->>>>>>> 57769fde64ec69f5e69ee2ce8cac4f3945236572
 Before account activation use test mode if Okay call to Checkout customer service and ask to account activations.
 
  * www.checkout.fi
@@ -20,8 +16,6 @@ Before account activation use test mode if Okay call to Checkout customer servic
  * @package checkout
  * @copyright Copyright 2003-2019 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
-<<<<<<< HEAD
  * @version $Id: Nida Verkkopalvelu (www.nida.fi) / Krbuk 2020 Sep 1 Modified in v1.5.7
-=======
- * @version $Id: Nida Verkkopalvelu (www.nida.fi) / Krbuk 2020 Sep 1 Modified in v1.5.7
->>>>>>> 57769fde64ec69f5e69ee2ce8cac4f3945236572
+
+
