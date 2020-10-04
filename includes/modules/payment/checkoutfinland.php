@@ -1,8 +1,6 @@
 <?php
 /**
- * Op Bank Checkout Finland payments old module will closed 30.06.2020. Use this modele coupons and group discount not working
- * 
- * www.checkout.fi
+ * www.checkout.fi (Op Bank Checkout Finland)
  *
  * Use Guzzle HTTP client v6 installed with Composer https://github.com/guzzle/guzzle/
  *
@@ -31,15 +29,15 @@ class checkoutfinland
 {
 	var $code, $title, $description, $enabled, $sort_order;
 	private $allowed_currencies = array('EUR');	
-	public $moduleVersion = '2.00';
-	protected $OpCheckoutApiVersion = '1.56c';	
+	public $moduleVersion = '2.14';
+	protected $OpCheckoutApiVersion = '1.57';	
 	
 	function __construct()	
 	{
         global $order;	
 		$this->code = 'checkoutfinland';
 		$this->title = defined('MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_TITLE') ? MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_TITLE : null;	
-		$this->description = '<strong>Checkout Finland ' . $this->moduleVersion . '</strong><br><br>' .MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION;
+		$this->description = '<strong>Checkout Finland using version -v' . $this->moduleVersion . '</strong><br><br>' .MODULE_PAYMENT_CHECKOUTFINLAND_TEXT_DESCRIPTION;
 		$this->enabled  = (defined('MODULE_PAYMENT_CHECKOUTFINLAND_STATUS') && MODULE_PAYMENT_CHECKOUTFINLAND_STATUS == 'Kyllä') ? true : false;		
 		$this->sort_order = defined('MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER') ? MODULE_PAYMENT_CHECKOUTFINLAND_SORT_ORDER : null;
 		$this->form_action_url = "https://api.checkout.fi/payments/";
@@ -323,7 +321,6 @@ class checkoutfinland
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Myyjältä Myyjä kauppiastunnus', 'MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA', '', 'Test myyjältä myyjä kauppiastunnus: 695874', '6', '7', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) values ('Maksumoduulin voimassaoloalue', 'MODULE_PAYMENT_CHECKOUTFINLAND_ZONE', '0', 'Jos alue on valittu, käytä tätä maksutapaa vain valitun alueen ostotapahtumille..', '6', '8', 'zen_get_zone_class_title', 'zen_cfg_pull_down_zone_classes(', now())");
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Tilauksen tila suoritetun maksun jälkeen', 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED', '2', 'Tilauksen tila maksun suorittamisen jälkeen:', '6', '10', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
-		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Tilauksen tila valtuutetun maksun jälkeen', 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_AUTHORIZED', '1', 'Tilauksen tila sen jälkeen kun maksu on valtuutettu:', '6', '11', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
 	}
 
 	function remove()
@@ -342,8 +339,7 @@ class checkoutfinland
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_MONITARKISTEAVAIN',
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA', 
 					 'MODULE_PAYMENT_CHECKOUTFINLAND_ZONE', 
-					 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED',
-					 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_AUTHORIZED');	
+					 'MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED');	
 	}
 	
 	function get_error()
