@@ -29,7 +29,7 @@ class checkoutfinland
 {
 	var $code, $title, $description, $enabled, $sort_order;
 	private $allowed_currencies = array('EUR');	
-	public $moduleVersion = '2.14';
+	public $moduleVersion = '2.15';
 	protected $OpCheckoutApiVersion = '1.57';	
 	
 	function __construct()	
@@ -63,7 +63,7 @@ class checkoutfinland
             ]
         );
         if (null === $this->sort_order) return false;	
-		if (IS_ADMIN_FLAG === true && (defined('MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS') == '375917' || 			defined('MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA') == '695861' || defined('MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA') == '695874')) $this->title .= '<span class="alert">' .MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST .'</span>';
+		if (IS_ADMIN_FLAG === true && (MODULE_PAYMENT_CHECKOUTFINLAND_KAUPPIAS == '375917' || 			MODULE_PAYMENT_CHECKOUTFINLAND_MYYJALTAMYYJA == '695861' || MODULE_PAYMENT_CHECKOUTFINLAND_PAAMYYJA == '695874')) $this->title .= '<span class="alert">' .MODULE_PAYMENT_CHECKOUTFINLAND_ALERT_TEST .'</span>';
 			
 		 // determine order-status for transactions
 		if ((int)MODULE_PAYMENT_CHECKOUTFINLAND_ORDER_STATUS_ID_SETTLED > 0)
@@ -146,8 +146,8 @@ class checkoutfinland
 		} catch (\GuzzleHttp\Exception\ClientException $e) {
 			if ($e->hasResponse()) {
 				$response = $e->getResponse();
-				echo 'Unexpected HTTP status code: {$response->getStatusCode()}\n\n';
-				echo '<a href="index.php?main_page=contact_us" title="' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .'" target="_blank"><strong>' .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR .' => ' .STORE_TELEPHONE_CUSTSERVICE.'</strong></a>';
+				echo "Unexpected HTTP status code: {$response->getStatusCode()}\n\n";
+				echo "<a href='index.php?main_page=contact_us' title='" .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR ."' target='_blank'><strong>" .MODULE_PAYMENT_CHECKOUTFINLAND_PAYMENT_ERROR ." => " .STORE_TELEPHONE_CUSTSERVICE. "</strong></a>";
 			}
 		}
   
